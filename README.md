@@ -575,6 +575,6 @@ Rscript mean_vectors.R
 
 ```
 
-This slurm script allocates 4 CPU cores for this task, which matches the parallel processing in your R script
+This slurm script allocates 4 CPU cores for this task, which matches the parallel processing in R script
 
 
