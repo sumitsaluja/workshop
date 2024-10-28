@@ -1,4 +1,4 @@
-Welcome to HPC Workshop
+##Welcome to HPC Workshop
 
 Using the CPU/GPUs HPC clusters is easy. Pick one of the applications below to get started. To obtain the materials to run the examples, use these commands:
 
@@ -8,7 +8,7 @@ $ cd /group/<PIUNI>_gp/
 $ git clone https://github.com/sumitsaluja/workshop.git
 ```
 
-Juypter
+##Juypter
 
 This setup allows a user to run Jupyter Lab on a SLURM-managed compute node, facilitating remote access via SSH tunneling. 
 The SLURM script handles resource allocation, while the Jupyter script sets up the environment and launches the server, providing clear instructions for accessing the notebook from a local machine.
@@ -86,7 +86,7 @@ ssh -N -L $PORT:[HOST]:$PORT [userID]@hpc.c2b2.columbia.edu
 
 
 
-GPU JOBS
+##GPU JOBS
 
 To add a GPU to your Slurm allocation:
 
@@ -94,6 +94,8 @@ To add a GPU to your Slurm allocation:
 #SBATCH --gres=gpu:L40S:1     # number of L40S gpus per node
 #SBATCH --partition=gpu       #GPU queue
 ```
+## CuPy
+
 [CuPy](https://cupy.chainer.org) is a library that provides an interface similar to NumPy but is designed to leverage NVIDIA GPUs for accelerated computing. It allows users to perform operations on large arrays and matrices efficiently by utilizing the parallel processing power of GPU. You can roughly think of CuPy as NumPy for GPUs
 
 To install  CuPy
