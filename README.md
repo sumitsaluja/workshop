@@ -1,4 +1,4 @@
-## Welcome to HPC Workshop
+# Welcome to HPC Workshop
 
 Using the CPU/GPUs HPC clusters is easy. Pick one of the applications below to get started. To obtain the materials to run the examples, use these commands:
 
@@ -68,7 +68,7 @@ jupyter-lab --ip=0.0.0.0 --port=$PORT --no-browser
 This command starts the Jupyter Lab server, making it accessible from any IP address (0.0.0.0) on the specified port. The --no-browser option prevents Jupyter from trying to open a browser on the compute node, which is typically not possible in HPC environments.
 
 
-Access the Notebook
+### Access the Notebook
 
 After submitting the job, you'll need to set up port forwarding to access the Jupyter Notebook server.
 
@@ -84,7 +84,7 @@ ssh -N -L $PORT:[HOST]:$PORT [userID]@hpc.c2b2.columbia.edu
 
 
 
-## GPU JOBS
+# GPU JOBS
 
 To add a GPU to your Slurm allocation:
 
@@ -95,6 +95,7 @@ To add a GPU to your Slurm allocation:
 ## CuPy
 
 [CuPy](https://cupy.chainer.org) is a library that provides an interface similar to NumPy but is designed to leverage NVIDIA GPUs for accelerated computing. It allows users to perform operations on large arrays and matrices efficiently by utilizing the parallel processing power of GPU. You can roughly think of CuPy as NumPy for GPUs
+
 
 To install CuPy
 ```
@@ -125,22 +126,21 @@ print("CuPy version: ", cp.__version__)
 
 ```
 
-Here is the breakdown of what each part does:
+### Here is the breakdown of what each part does:
 
-Imports:
+### Imports:
 
 perf_counter from time for high-resolution timing.
 
 cupy for GPU array operations.
 
-Matrix Generation:
+### Matrix Generation:
 
 N = 2000 sets the size of the matrix.
 
 X = cp.random.randn(N, N, dtype=cp.float64) creates a 2000x2000 matrix with normally distributed random numbers.
 
-
-Timing Execution:
+### Timing Execution:
 
 The code runs the SVD operation 5 times to measure performance accurately.
 
@@ -148,7 +148,7 @@ cp.linalg.svd(X) computes the SVD of matrix X.
 
 cp.cuda.Device(0).synchronize() ensures that all GPU operations are complete before timing stops.
 
-Results:
+### Results:
 
 The minimum execution time from the trials is printed.
 
@@ -220,15 +220,15 @@ print("PyTorch version: ", torch.__version__)
 
 ```
 
-Breakdown of the Code:
+### Breakdown of the Code:
 
-Imports:
+### Imports:
 
 perf_counter from the time module for precise timing.
 
 torch for tensor operations and GPU support.
 
-Matrix Setup:
+### Matrix Setup:
 
 N = 2000 defines the dimensions of the matrix.
 
@@ -237,13 +237,13 @@ cuda0 = torch.device('cuda:0') specifies that computations should occur on the f
 x = torch.randn(N, N, dtype=torch.float64, device=cuda0) generates a 2000x2000 matrix filled with random numbers, stored on the GPU.
 
 
-SVD Computation:
+### SVD Computation:
 
 t0 = perf_counter() starts the timer.
 u, s, v = torch.svd(x) computes the SVD of the matrix.
 elapsed_time = perf_counter() - t0 calculates the total time taken for the operation.
 
-Results:
+### Results:
 
 The execution time is printed.
 
