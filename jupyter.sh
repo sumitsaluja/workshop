@@ -14,8 +14,8 @@ echo " "
 echo "============================================================================="
 echo "=== jupyterlab.sh Install and run JupyterLab locally" 
 echo "+++ installing jupyter" 
-python -m venv .jup
-. .jup/bin/activate
+python -m venv ~/.jupyter
+. ~/.jupyter/bin/activate
 python -m pip install pip --upgrade
 python -m pip install --upgrade jupyterlab
 python -m pip install --upgrade bash_kernel
