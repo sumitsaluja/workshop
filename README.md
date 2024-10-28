@@ -130,24 +130,30 @@ Here is the breakdown of what each part does:
 Imports:
 
 perf_counter from time for high-resolution timing.
+
 cupy for GPU array operations.
 
 Matrix Generation:
 
 N = 2000 sets the size of the matrix.
+
 X = cp.random.randn(N, N, dtype=cp.float64) creates a 2000x2000 matrix with normally distributed random numbers.
 
 
 Timing Execution:
 
 The code runs the SVD operation 5 times to measure performance accurately.
+
 cp.linalg.svd(X) computes the SVD of matrix X.
+
 cp.cuda.Device(0).synchronize() ensures that all GPU operations are complete before timing stops.
 
 Results:
 
 The minimum execution time from the trials is printed.
+
 The sum of the singular values (s) is calculated and displayed.
+
 The CuPy version used is printed.
 
 
