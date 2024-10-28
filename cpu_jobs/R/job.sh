@@ -7,7 +7,7 @@
 #SBATCH --mem=4G                      # Memory limit
 
 # Load the R module 
-module load R
+module load load R/4.2.1
 
 # Run the R script
 Rscript mean_vectors.R

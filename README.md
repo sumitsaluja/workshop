@@ -414,4 +414,167 @@ Note that this implementation is not efficient for parallel execution since it r
 
 ### Main Function:
 N is set to 2<sup>20</sup>  (1 million elements).
+
 Unified Memory is allocated for the arrays x and y, making them accessible from both the CPU and GPU.
+
+### Initialize Arrays:
+The host initializes the arrays x and y with values 1.0 and 2.0, respectively.
+### Kernel Launch:
+
+The kernel is launched with one block and one thread. The device is synchronized to ensure the GPU finishes before accessing the results.
+
+### Error Checking:
+
+The maximum error is computed to verify that all elements of y have been correctly updated to 3.0.
+
+### Memory Cleanup:
+
+Frees the allocated Unified Memory for x and y.
+
+
+### Output
+
+The program will output the maximum error, which should be very close to 0.0 if the addition was successful.
+
+
+Here is te Slurm Script
+```
+#!/bin/bash -l
+#SBATCH --job-name=c++-gpu      # create a short name for your job
+#SBATCH --nodes=1                # node count
+#SBATCH --ntasks=1               # total number of tasks across all nodes
+#SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --gres=gpu:L40S:1        # number of gpus per node
+#SBATCH --mem=4G                 # total memory (RAM) per node
+#SBATCH --time=00:03:00          # total run time limit (HH:MM:SS)
+#SBATCH --partition=gpu          # Queue/Partition
+
+module load cuda
+
+##Compile the cuda script using the nvcc compiler
+nvcc matrix_add -o matrix_add.cu
+
+## Run the script
+./matrix_add
+
+
+```
+
+This slurm script Compiles the CUDA file named matrix_add.cu using the NVIDIA CUDA Compiler (nvcc), outputting an executable named matrix_add and executes the compiled CUDA application.
+
+Submit the job:
+
+```
+$ sbatch job.sh
+```
+
+
+
+
+# CPU JOBS
+
+## R
+R is already installed in CLUSTER. To use R load the module
+
+```
+module load R/4.2.1
+```
+
+In this example we will utilizes parallel processing to compute the means of a list of random vectors. To install
+```
+$ module load load R/4.2.1
+$ R
+> install.packages(doParallel)
+```
+
+
+Here is the R code
+
+```
+mean_vectors.R
+library(foreach)
+library(doParallel)
+
+# Create a list of 1000 random vectors
+vectors <- replicate(1000, rnorm(1000), simplify = FALSE)
+
+# Define a function to compute the mean of a vector
+mean_vector <- function(vec) {
+  mean(vec)
+}
+
+# Compute the means of the vectors using foreach with 4 cores
+cl <- makeCluster(4)
+registerDoParallel(cl)
+start_time <- Sys.time()
+means <- foreach(vec = vectors) %dopar% mean_vector(vec)
+end_time <- Sys.time()
+stopCluster(cl)
+
+# Compute the means of the vectors using a for loop
+start_time_serial <- Sys.time()
+means_serial <- numeric(length(vectors))
+for (i in seq_along(vectors)) {
+  means_serial[i] <- mean_vector(vectors[[i]])
+}
+end_time_serial <- Sys.time()
+
+# Print the execution times
+cat("Parallel execution time:", end_time - start_time, "\n")
+cat("Serial execution time:", end_time_serial - start_time_serial, "\n")
+
+```
+
+### Code Breakdown:
+
+### Load Libraries:
+Loads the necessary libraries for parallel processing.
+### Generate Random Vectors:
+Creates a list of 1000 random vectors, each containing 1000 normally distributed numbers.
+### Define the Mean Function:
+
+Defines a function to compute the mean of a vector.
+
+### Parallel Mean Calculation:
+
+Creates a cluster with 4 cores.
+
+Registers the cluster for parallel processing.
+
+Measures the execution time for computing the means in parallel using foreach.
+
+Stops the cluster after the computation.
+
+### Serial Mean Calculation:
+
+Measures the execution time for computing the means serially using a for loop.
+
+### Print Execution Times:
+
+Outputs the execution times for both parallel and serial computations.
+
+
+Here i slurm script
+
+```
+#!/bin/bash
+#SBATCH --job-name=mean_vectors      # Job name
+#SBATCH --output=mean_vectors.out     # Standard output and error log
+#SBATCH --ntasks=1                    # Run on a single task
+#SBATCH --cpus-per-task=4             # Number of CPU cores
+#SBATCH --time=00:05:00               # Time limit hrs:min:sec
+#SBATCH --mem=4G                      # Memory limit
+
+# Load the R module
+module load load R/4.2.1
+
+# Run the R script
+Rscript mean_vectors.R
+
+
+
+```
+
+This slurm script allocates 4 CPU cores for this task, which matches the parallel processing in your R script
+
+
