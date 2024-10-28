@@ -1,4 +1,4 @@
-# Welcome to HPC Workshop
+# HPC Workshop
 
 Using the CPU/GPUs HPC clusters is easy. Pick one of the applications below to get started. To obtain the materials to run the examples, use these commands:
 
@@ -271,13 +271,147 @@ conda activate /users/sysops/tmp/workshop/torch-env
 python svd.py
 
 ```
-
-You can track the job's progress using squeue -u $USER. After the job finishes, check the output using cat slurm-*.out
-
-
 Submit the job:
 
 ```
 $ sbatch job.sh
 ```
 
+
+You can track the job's progress using squeue -u $USER. After the job finishes, check the output using cat slurm-*.out
+
+
+
+## MATLAB
+MATLAB is available on the cluster.
+
+In this example we will use MATLAB  to perform Singular Value Decomposition (SVD) on a randomly generated matrix, leveraging GPU acceleration.
+
+```
+gpu = gpuDevice();
+fprintf('Using a %s GPU.\n', gpu.Name);
+disp(gpuDevice);
+
+X = gpuArray([1 0 2; -1 5 0; 0 3 -9]);
+whos X;
+[U,S,V] = svd(X)
+fprintf('trace(S): %f\n', trace(S))
+quit;
+
+```
+
+
+### Breakdown of the Code:
+
+### Initialize GPU Device:
+
+gpu = gpuDevice(); retrieves the current GPU device.
+fprintf and disp display the name and details of the GPU being used.
+
+### Create a GPU Array:
+
+X is created as a GPU array containing specified values.
+whos X; displays information about the variable X.
+
+### Perform SVD:
+Computes the SVD of the matrix X, returning matrices U, S, and V.
+
+### Calculate and Display the Trace:
+
+Calculates the trace of matrix S (the sum of its diagonal elements) and prints it.
+
+
+Here is Slurm Script
+
+```
+#!/bin/bash
+#SBATCH --job-name=matlab-svd    # create a short name for your job
+#SBATCH --nodes=1                # node count
+#SBATCH --ntasks=1               # total number of tasks across all nodes
+#SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --time=00:10:00          # total run time limit (HH:MM:SS)
+#SBATCH --mem=4G                 # total memory (RAM) per node
+#SBATCH --gres=gpu:L40S:1        # number of gpus per node
+#SBATCH --partition=gpu          # Queue/Partition
+
+module load matlab/R2023a
+
+matlab -singleCompThread -nodisplay -nosplash -r svd
+
+
+```
+Submit the job:
+
+```
+$ sbatch job.sh
+```
+
+
+You can track the job's progress using squeue -u $USER. After the job finishes, check the output using cat slurm-*.out
+
+
+## C++
+
+In this example C++ CUDA code defines a simple kernel that adds the elements of two arrays and demonstrates the use of Unified Memory. 
+
+```
+#include <iostream>
+#include <math.h>
+// Kernel function to add the elements of two arrays
+__global__
+void add(int n, float *x, float *y)
+{
+  for (int i = 0; i < n; i++)
+    y[i] = x[i] + y[i];
+}
+
+int main(void)
+{
+  int N = 1<<20;
+  float *x, *y;
+
+  // Allocate Unified Memory – accessible from CPU or GPU
+  cudaMallocManaged(&x, N*sizeof(float));
+  cudaMallocManaged(&y, N*sizeof(float));
+
+  // initialize x and y arrays on the host
+  for (int i = 0; i < N; i++) {
+    x[i] = 1.0f;
+    y[i] = 2.0f;
+  }
+
+  // Run kernel on 1M elements on the GPU
+  add<<<1, 1>>>(N, x, y);
+
+  // Wait for GPU to finish before accessing on host
+  cudaDeviceSynchronize();
+
+  // Check for errors (all values should be 3.0f)
+  float maxError = 0.0f;
+  for (int i = 0; i < N; i++)
+    maxError = fmax(maxError, fabs(y[i]-3.0f));
+  std::cout << "Max error: " << maxError << std::endl;
+
+  // Free memory
+  cudaFree(x);
+  cudaFree(y);
+
+  return 0;
+}
+
+
+```
+Here's a breakdown of the code:
+
+### Includes:
+
+Includes the necessary headers for input/output and mathematical functions.
+
+### Kernel Function:
+This function runs on the GPU and performs element-wise addition of arrays x and y. 
+
+Note that this implementation is not efficient for parallel execution since it runs a loop on a single thread.
+
+### Main Function:
+N is set to 2<sup>20</sup>  (1 million elements).
+Unified Memory is allocated for the arrays x and y, making them accessible from both the CPU and GPU.
