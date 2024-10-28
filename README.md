@@ -56,8 +56,6 @@ echo "+++ run jupyter"
 
 
 jupyter-lab --ip=0.0.0.0 --port=$PORT --no-browser
-
-
 ```
 
 
@@ -82,8 +80,6 @@ ssh -N -L $PORT:[HOST]:$PORT [userID]@hpc.c2b2.columbia.edu
 3. Open your browser: In your web browser, go to http://127.0.0.1:$PORT. You should be able to access your Jupyter Notebook server.
 
 
-
-
 # GPU JOBS
 
 To add a GPU to your Slurm allocation:
@@ -100,7 +96,7 @@ To add a GPU to your Slurm allocation:
 To install CuPy
 ```
 module load conda
-conda create --name cupyenv cupy --channel conda-forge
+conda create --prefix=/users/sysops/tmp/workshop/cupyenv cupy --channel conda-forge
 
 ```
 
@@ -123,7 +119,6 @@ for _ in range(trials):
 print("Execution time: ", min(times))
 print("sum(s) = ", s.sum())
 print("CuPy version: ", cp.__version__)
-
 ```
 
 ### Here is the breakdown of what each part does:
@@ -156,9 +151,6 @@ The sum of the singular values (s) is calculated and displayed.
 
 The CuPy version used is printed.
 
-
-
-
 Below is a sample Slurm script:
 
 ```
@@ -174,7 +166,7 @@ Below is a sample Slurm script:
 
 module load conda/3
 
-conda activate /groups/sysops/workshop
+conda activate /users/sysops/tmp/workshop/cupyenv
 python svd.py
 
 ```
@@ -337,8 +329,6 @@ Here is Slurm Script
 module load matlab/R2023a
 
 matlab -singleCompThread -nodisplay -nosplash -r svd
-
-
 ```
 Submit the job:
 
@@ -571,10 +561,57 @@ module load load R/4.2.1
 # Run the R script
 Rscript mean_vectors.R
 
-
-
 ```
 
 This slurm script allocates 4 CPU cores for this task, which matches the parallel processing in R script
 
 
+## Numpy
+
+In this example we will perform a Singular Value Decomposition (SVD) on a randomly generated matrix using Numpy.
+```
+from time import perf_counter
+
+N = 2000
+cpu_runs = 5
+
+times = []
+import numpy as np
+X = np.random.randn(N, N).astype(np.float64)
+for _ in range(cpu_runs):
+  t0 = perf_counter()
+  u, s, v = np.linalg.svd(X)
+  times.append(perf_counter() - t0)
+
+print("CPU Execution time: ", min(times))
+print("sum(s) = ", s.sum())
+print("NumPy version: ", np.__version__)
+```
+Here’s a breakdown of of code:
+
+### Imports and Setup: 
+Import perf_counter for timing, and set up a matrix of size 2000x2000 filled with random values from a normal distribution.
+
+### SVD Computation:
+
+ Run the SVD computation five times, timing each run and storing the times in a list.
+
+### Results:
+
+Finally, print the minimum execution time, the sum of the singular values, and the version of NumPy being used.
+
+Here is slurm script
+```
+#!/bin/bash -l
+#SBATCH --job-name=numpy-cpu      # create a short name for your job
+#SBATCH --nodes=1                # node count
+#SBATCH --ntasks=1               # total number of tasks across all nodes
+#SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --mem=4G                 # total memory (RAM) per node
+#SBATCH --time=00:00:30          # total run time limit (HH:MM:SS)
+
+module load conda/3
+conda activate /users/sysops/tmp/workshop/cupyenv
+
+python svd.py
+```
