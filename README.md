@@ -458,8 +458,107 @@ Submit the job:
 $ sbatch job.sh
 ```
 
+## R
+R is already installed in CLUSTER. To use R load the module
+
+```
+module load R/4.2.1
+```
+
+In this example we will utilizes GPU to compute the means of a list of random vectors. To install
+```
+$ module load load R/4.2.1
+$ R
+> install.packages("gpuR")
+```
+
+Here is the R code
+```
+# Load necessary library
+library(gpuR)
 
 
+# Create a list of random vectors (reduce size for testing)
+vectors <- replicate(500, rnorm(500), simplify = FALSE)
+
+# Define a function to compute the mean of a vector using GPU
+mean_vector_gpu <- function(vec) {
+  gpu_vec <- gpuVector(vec, type = "float")  # Use gpuVector
+  mean_value <- mean(gpu_vec)  # Compute mean using GPU
+  return(as.numeric(mean_value))
+}
+
+# Compute the means of the vectors using GPU
+start_time <- Sys.time()
+means_gpu <- sapply(vectors, mean_vector_gpu)
+end_time <- Sys.time()
+
+# Print the execution time
+cat("GPU execution time:", end_time - start_time, "\n")
+
+```
+Breakdown of the code:
+
+### Load the Necessary Library:
+library(gpuR)  loads the gpuR package, which provides tools for performing GPU-accelerated computations in R. It allows users to utilize the processing power of GPUs for tasks like matrix operations, making computations faster compared to running on a CPU.
+
+### Create a List of Random Vectors:
+
+This generates a list of 500 random vectors, each containing 500 normally distributed numbers.
+
+rnorm(500) creates a vector of 500 random numbers from a standard normal distribution (mean = 0, standard deviation = 1).
+
+replicate(500, ...) runs the rnorm(500) function 500 times, creating a list of 500 vectors. The simplify = FALSE argument ensures that the output is a list rather than a matrix.
+
+### Define the Mean Calculation Function Using GPU:
+```
+mean_vector_gpu <- function(vec) {
+    gpu_vec <- gpuVector(vec, type = "float")  # Use gpuVector
+    mean_value <- mean(gpu_vec)  # Compute mean using GPU
+    return(as.numeric(mean_value))
+}
+```
+This function takes a vector vec as input and computes its mean using the GPU.
+
+gpuVector(vec, type = "float"): Converts the input vector into a gpuVector, which is a data structure compatible with GPU operations. Specifying type = "float" indicates that the data type of the elements is floating-point.
+
+mean(gpu_vec): Computes the mean of the GPU vector. This operation takes advantage of the GPU's parallel processing capabilities, which can be much faster than calculating the mean on a CPU for large datasets.
+
+as.numeric(mean_value): Converts the result back to a numeric value for easier handling in R.
+
+### Compute the Means Using GPU:
+start_time <- Sys.time(): Records the current time before starting the computation. This is used to measure how long the computation takes.
+
+means_gpu <- sapply(vectors, mean_vector_gpu): Applies the mean_vector_gpu function to each vector in the vectors list. The sapply function simplifies the output to a numeric vector containing the means.
+
+end_time <- Sys.time(): Records the time after the computation has finished.
+
+### Print the Execution Time:
+This calculates the total execution time by subtracting start_time from end_time and prints the result to the console. The output shows how long the GPU computation took.
+
+Here is the Slurm script:
+
+```
+#!/bin/bash -l
+#SBATCH --job-name=mean-vector  # create a short name for your job
+#SBATCH --nodes=1                # node count
+#SBATCH --ntasks=1               # total number of tasks across all nodes
+#SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --gres=gpu:L40S:1        # number of gpus per node
+#SBATCH --mem=4G                 # total memory (RAM) per node
+#SBATCH --time=00:00:30          # total run time limit (HH:MM:SS)
+#SBATCH --partition=gpu          # Queue/Partition
+
+
+# Load the R module
+module load R/4.2.1
+
+module load cuda
+
+# Run the R script
+Rscript mean_vector.R
+
+```
 
 # CPU JOBS
 
@@ -544,7 +643,7 @@ Measures the execution time for computing the means serially using a for loop.
 Outputs the execution times for both parallel and serial computations.
 
 
-Here i slurm script
+Here is the  slurm script
 
 ```
 #!/bin/bash
